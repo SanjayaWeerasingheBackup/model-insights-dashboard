@@ -114,7 +114,7 @@ const Index = () => {
         {/* Charts Grid - Row 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <ClassDistributionChart data={activeDataset.classDistribution} />
-          <SplitChart split={activeDataset.splitPercentages} />
+          <SplitChart split={activeDataset.splitPercentages} splitInfo={activeDataset.splitInfo} />
         </div>
 
         {/* Charts Grid - Row 2 */}

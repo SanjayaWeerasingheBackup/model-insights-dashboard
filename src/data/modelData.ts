@@ -25,6 +25,10 @@ export interface DatasetVersion {
   features: number;
   classDistribution: { name: string; count: number; percentage: number }[];
   splitPercentages: { train: number; validation: number; test: number };
+  splitInfo?: {
+    train: { samples: number; composition: string };
+    test: { samples: number; composition: string };
+  };
   models: ModelResult[];
   available: boolean;
 }
@@ -43,6 +47,10 @@ export const datasetVersions: DatasetVersion[] = [
       { name: "Anomalous", count: 25065, percentage: 41 },
     ],
     splitPercentages: { train: 80, validation: 0, test: 20 },
+    splitInfo: {
+      train: { samples: 28800, composition: "100% Normal" },
+      test: { samples: 32265, composition: "22.3% Normal + 77.7% Anomalous" },
+    },
     models: [
       {
         id: "knn",
@@ -131,7 +139,11 @@ export const datasetVersions: DatasetVersion[] = [
       { name: "Attack", count: 170436, percentage: 31.5 },
       { name: "Suspicious", count: 20880, percentage: 3.9 },
     ],
-    splitPercentages: { train: 100, validation: 0, test: 0 }, // Trained only on Benign
+    splitInfo: {
+      train: { samples: 349178, composition: "100% Benign" },
+      test: { samples: 100000, composition: "50,000 Benign + 50,000 Attack" },
+    },
+    splitPercentages: { train: 78, validation: 0, test: 22 }, // Approximate percentages
     models: [
       {
         id: "ocsvm",
