@@ -1,132 +1,198 @@
-export interface ModelVersion {
+export interface ModelResult {
   id: string;
   name: string;
   accuracy: number;
-  loss: number;
-  epochs: number;
-  trainedAt: string;
-  classDistribution: { name: string; count: number; percentage: number }[];
-  splitPercentages: { train: number; validation: number; test: number };
-  lossHistory: { epoch: number; train: number; validation: number }[];
-  accuracyHistory: { epoch: number; train: number; validation: number }[];
-  rocData: { fpr: number; tpr: number }[];
-  prData: { recall: number; precision: number }[];
-  aucScore: number;
-  f1Score: number;
   precision: number;
   recall: number;
+  f1Score: number;
+  fpr: number; // False Positive Rate
+  trainingTime: string;
+  throughput: string;
+  confusionMatrix: {
+    tn: number;
+    fp: number;
+    fn: number;
+    tp: number;
+  };
 }
 
-export const modelVersions: ModelVersion[] = [
+export interface DatasetVersion {
+  id: string;
+  name: string;
+  datasetName: string;
+  date: string;
+  totalSamples: number;
+  features: number;
+  classDistribution: { name: string; count: number; percentage: number }[];
+  splitPercentages: { train: number; validation: number; test: number };
+  models: ModelResult[];
+  available: boolean;
+}
+
+export const datasetVersions: DatasetVersion[] = [
   {
     id: "v1",
-    name: "Version 1",
-    accuracy: 0.847,
-    loss: 0.412,
-    epochs: 50,
-    trainedAt: "2024-01-15",
+    name: "V1",
+    datasetName: "CSIC 2010 HTTP Traffic",
+    date: "2026-01-03",
+    totalSamples: 61065,
+    features: 11,
+    available: true,
     classDistribution: [
-      { name: "Class A", count: 2500, percentage: 25 },
-      { name: "Class B", count: 3200, percentage: 32 },
-      { name: "Class C", count: 1800, percentage: 18 },
-      { name: "Class D", count: 2500, percentage: 25 },
+      { name: "Normal", count: 36000, percentage: 59 },
+      { name: "Anomalous", count: 25065, percentage: 41 },
     ],
-    splitPercentages: { train: 70, validation: 15, test: 15 },
-    lossHistory: Array.from({ length: 50 }, (_, i) => ({
-      epoch: i + 1,
-      train: 2.5 * Math.exp(-0.05 * i) + 0.3 + Math.random() * 0.05,
-      validation: 2.6 * Math.exp(-0.045 * i) + 0.35 + Math.random() * 0.08,
-    })),
-    accuracyHistory: Array.from({ length: 50 }, (_, i) => ({
-      epoch: i + 1,
-      train: Math.min(0.95, 0.4 + 0.55 * (1 - Math.exp(-0.08 * i)) + Math.random() * 0.02),
-      validation: Math.min(0.92, 0.35 + 0.52 * (1 - Math.exp(-0.07 * i)) + Math.random() * 0.03),
-    })),
-    rocData: Array.from({ length: 100 }, (_, i) => ({
-      fpr: i / 100,
-      tpr: Math.min(1, Math.pow(i / 100, 0.5) + Math.random() * 0.02),
-    })),
-    prData: Array.from({ length: 100 }, (_, i) => ({
-      recall: i / 100,
-      precision: Math.max(0.3, 1 - 0.5 * (i / 100) + Math.random() * 0.05),
-    })),
-    aucScore: 0.89,
-    f1Score: 0.82,
-    precision: 0.85,
-    recall: 0.79,
+    splitPercentages: { train: 80, validation: 0, test: 20 },
+    models: [
+      {
+        id: "knn",
+        name: "KNN (LOF)",
+        accuracy: 0.7853,
+        precision: 0.9913,
+        recall: 0.7301,
+        f1Score: 0.8409,
+        fpr: 0.0224,
+        trainingTime: "7.32s",
+        throughput: "4,500 samples/s",
+        confusionMatrix: { tn: 7039, fp: 161, fn: 6765, tp: 18300 },
+      },
+      {
+        id: "isolation_forest",
+        name: "Isolation Forest",
+        accuracy: 0.7393,
+        precision: 0.8663,
+        recall: 0.7856,
+        f1Score: 0.8240,
+        fpr: 0.4221,
+        trainingTime: "0.80s",
+        throughput: "62,500 samples/s",
+        confusionMatrix: { tn: 4161, fp: 3039, fn: 5373, tp: 19692 },
+      },
+      {
+        id: "ocsvm",
+        name: "One-Class SVM",
+        accuracy: 0.5497,
+        precision: 0.9422,
+        recall: 0.4478,
+        f1Score: 0.6071,
+        fpr: 0.0956,
+        trainingTime: "19.53s",
+        throughput: "3,058 samples/s",
+        confusionMatrix: { tn: 6512, fp: 688, fn: 13840, tp: 11225 },
+      },
+      {
+        id: "gmm",
+        name: "GMM",
+        accuracy: 0.4774,
+        precision: 0.9243,
+        recall: 0.3565,
+        f1Score: 0.5146,
+        fpr: 0.1017,
+        trainingTime: "1.12s",
+        throughput: "250,000 samples/s",
+        confusionMatrix: { tn: 6468, fp: 732, fn: 16129, tp: 8936 },
+      },
+      {
+        id: "autoencoder",
+        name: "Autoencoder",
+        accuracy: 0.4689,
+        precision: 0.9597,
+        recall: 0.3302,
+        f1Score: 0.4914,
+        fpr: 0.0483,
+        trainingTime: "50.57s",
+        throughput: "7,633 samples/s",
+        confusionMatrix: { tn: 6852, fp: 348, fn: 16788, tp: 8277 },
+      },
+    ],
   },
   {
     id: "v2",
-    name: "Version 2",
-    accuracy: 0.912,
-    loss: 0.287,
-    epochs: 75,
-    trainedAt: "2024-02-20",
-    classDistribution: [
-      { name: "Class A", count: 3000, percentage: 24 },
-      { name: "Class B", count: 3750, percentage: 30 },
-      { name: "Class C", count: 2500, percentage: 20 },
-      { name: "Class D", count: 3250, percentage: 26 },
-    ],
-    splitPercentages: { train: 75, validation: 12.5, test: 12.5 },
-    lossHistory: Array.from({ length: 75 }, (_, i) => ({
-      epoch: i + 1,
-      train: 2.2 * Math.exp(-0.06 * i) + 0.2 + Math.random() * 0.04,
-      validation: 2.3 * Math.exp(-0.055 * i) + 0.25 + Math.random() * 0.06,
-    })),
-    accuracyHistory: Array.from({ length: 75 }, (_, i) => ({
-      epoch: i + 1,
-      train: Math.min(0.97, 0.45 + 0.52 * (1 - Math.exp(-0.1 * i)) + Math.random() * 0.015),
-      validation: Math.min(0.94, 0.4 + 0.5 * (1 - Math.exp(-0.09 * i)) + Math.random() * 0.025),
-    })),
-    rocData: Array.from({ length: 100 }, (_, i) => ({
-      fpr: i / 100,
-      tpr: Math.min(1, Math.pow(i / 100, 0.4) + Math.random() * 0.015),
-    })),
-    prData: Array.from({ length: 100 }, (_, i) => ({
-      recall: i / 100,
-      precision: Math.max(0.4, 1 - 0.4 * (i / 100) + Math.random() * 0.04),
-    })),
-    aucScore: 0.93,
-    f1Score: 0.89,
-    precision: 0.91,
-    recall: 0.87,
+    name: "V2",
+    datasetName: "CIC-IDS2018",
+    date: "Coming Soon",
+    totalSamples: 0,
+    features: 40,
+    available: false,
+    classDistribution: [],
+    splitPercentages: { train: 0, validation: 0, test: 0 },
+    models: [],
   },
   {
     id: "v3",
-    name: "Version 3",
-    accuracy: 0.945,
-    loss: 0.198,
-    epochs: 100,
-    trainedAt: "2024-03-10",
+    name: "V3",
+    datasetName: "BCCC-cPacket Cloud DDoS 2024",
+    date: "2026-01-04",
+    totalSamples: 540494,
+    features: 317,
+    available: true,
     classDistribution: [
-      { name: "Class A", count: 4000, percentage: 25 },
-      { name: "Class B", count: 4400, percentage: 27.5 },
-      { name: "Class C", count: 3600, percentage: 22.5 },
-      { name: "Class D", count: 4000, percentage: 25 },
+      { name: "Benign", count: 349178, percentage: 64.6 },
+      { name: "Attack", count: 170436, percentage: 31.5 },
+      { name: "Suspicious", count: 20880, percentage: 3.9 },
     ],
-    splitPercentages: { train: 80, validation: 10, test: 10 },
-    lossHistory: Array.from({ length: 100 }, (_, i) => ({
-      epoch: i + 1,
-      train: 2.0 * Math.exp(-0.07 * i) + 0.15 + Math.random() * 0.03,
-      validation: 2.1 * Math.exp(-0.065 * i) + 0.18 + Math.random() * 0.05,
-    })),
-    accuracyHistory: Array.from({ length: 100 }, (_, i) => ({
-      epoch: i + 1,
-      train: Math.min(0.98, 0.5 + 0.48 * (1 - Math.exp(-0.12 * i)) + Math.random() * 0.01),
-      validation: Math.min(0.96, 0.45 + 0.48 * (1 - Math.exp(-0.11 * i)) + Math.random() * 0.02),
-    })),
-    rocData: Array.from({ length: 100 }, (_, i) => ({
-      fpr: i / 100,
-      tpr: Math.min(1, Math.pow(i / 100, 0.35) + Math.random() * 0.01),
-    })),
-    prData: Array.from({ length: 100 }, (_, i) => ({
-      recall: i / 100,
-      precision: Math.max(0.5, 1 - 0.35 * (i / 100) + Math.random() * 0.03),
-    })),
-    aucScore: 0.96,
-    f1Score: 0.93,
-    precision: 0.94,
-    recall: 0.92,
+    splitPercentages: { train: 100, validation: 0, test: 0 }, // Trained only on Benign
+    models: [
+      {
+        id: "ocsvm",
+        name: "One-Class SVM",
+        accuracy: 0.8841,
+        precision: 0.9432,
+        recall: 0.8175,
+        f1Score: 0.8759,
+        fpr: 0.0493,
+        trainingTime: "74.5 min",
+        throughput: "255 samples/s",
+        confusionMatrix: { tn: 47537, fp: 2463, fn: 9123, tp: 40877 },
+      },
+      {
+        id: "knn",
+        name: "KNN (LOF)",
+        accuracy: 0.8089,
+        precision: 0.9347,
+        recall: 0.6643,
+        f1Score: 0.7766,
+        fpr: 0.0464,
+        trainingTime: "9.6 min",
+        throughput: "596 samples/s",
+        confusionMatrix: { tn: 47680, fp: 2320, fn: 16787, tp: 33213 },
+      },
+      {
+        id: "autoencoder",
+        name: "Autoencoder",
+        accuracy: 0.5683,
+        precision: 0.7908,
+        recall: 0.1856,
+        f1Score: 0.3007,
+        fpr: 0.0491,
+        trainingTime: "8.6 min",
+        throughput: "42,539 samples/s",
+        confusionMatrix: { tn: 47545, fp: 2455, fn: 40719, tp: 9281 },
+      },
+      {
+        id: "gmm",
+        name: "GMM",
+        accuracy: 0.5444,
+        precision: 0.7372,
+        recall: 0.1381,
+        f1Score: 0.2326,
+        fpr: 0.0492,
+        trainingTime: "9.9s",
+        throughput: "309,785 samples/s",
+        confusionMatrix: { tn: 47539, fp: 2461, fn: 43096, tp: 6904 },
+      },
+      {
+        id: "isolation_forest",
+        name: "Isolation Forest",
+        accuracy: 0.5402,
+        precision: 0.7242,
+        recall: 0.1300,
+        f1Score: 0.2205,
+        fpr: 0.0495,
+        trainingTime: "2.2s",
+        throughput: "226,137 samples/s",
+        confusionMatrix: { tn: 47524, fp: 2476, fn: 43499, tp: 6501 },
+      },
+    ],
   },
 ];

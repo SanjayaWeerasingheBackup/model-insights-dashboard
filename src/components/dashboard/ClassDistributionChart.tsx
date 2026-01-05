@@ -1,8 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
-import { ModelVersion } from "@/data/modelData";
 
 interface ClassDistributionChartProps {
-  data: ModelVersion["classDistribution"];
+  data: { name: string; count: number; percentage: number }[];
 }
 
 const COLORS = [
@@ -45,7 +44,7 @@ export const ClassDistributionChart = ({ data }: ClassDistributionChartProps) =>
                 borderRadius: "8px",
                 color: "hsl(210, 40%, 98%)",
               }}
-              formatter={(value: number, name: string) => [`${value} samples`, name]}
+              formatter={(value: number, name: string) => [`${value.toLocaleString()} samples`, name]}
             />
             <Legend
               wrapperStyle={{ paddingTop: "20px" }}

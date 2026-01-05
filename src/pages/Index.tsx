@@ -1,29 +1,81 @@
 import { useState } from "react";
-import { Target, TrendingDown, Award, Crosshair } from "lucide-react";
-import { modelVersions } from "@/data/modelData";
+import { Target, Shield, Crosshair, AlertTriangle } from "lucide-react";
+import { datasetVersions } from "@/data/modelData";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { VersionTabs } from "@/components/dashboard/VersionTabs";
+import { ModelSelector } from "@/components/dashboard/ModelSelector";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { ClassDistributionChart } from "@/components/dashboard/ClassDistributionChart";
 import { SplitChart } from "@/components/dashboard/SplitChart";
-import { LossAccuracyChart } from "@/components/dashboard/LossAccuracyChart";
-import { RocPrChart } from "@/components/dashboard/RocPrChart";
+import { ConfusionMatrix } from "@/components/dashboard/ConfusionMatrix";
+import { MetricsTable } from "@/components/dashboard/MetricsTable";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Index = () => {
   const [activeVersionId, setActiveVersionId] = useState("v3");
+  const [activeModelId, setActiveModelId] = useState("ocsvm");
   
-  const activeVersion = modelVersions.find(v => v.id === activeVersionId) || modelVersions[2];
+  const activeDataset = datasetVersions.find(v => v.id === activeVersionId) || datasetVersions[2];
+  const activeModel = activeDataset.models.find(m => m.id === activeModelId) || activeDataset.models[0];
+
+  // Reset model selection when switching datasets
+  const handleVersionChange = (versionId: string) => {
+    setActiveVersionId(versionId);
+    const dataset = datasetVersions.find(v => v.id === versionId);
+    if (dataset && dataset.models.length > 0) {
+      // Select the best model (highest accuracy) by default
+      const bestModel = [...dataset.models].sort((a, b) => b.accuracy - a.accuracy)[0];
+      setActiveModelId(bestModel.id);
+    }
+  };
+
+  if (!activeDataset.available) {
+    return (
+      <div className="min-h-screen bg-background p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
+            <DashboardHeader dataset={activeDataset} />
+            <VersionTabs 
+              versions={datasetVersions} 
+              activeVersion={activeVersionId} 
+              onVersionChange={handleVersionChange} 
+            />
+          </div>
+          <Card className="p-12 text-center">
+            <CardContent className="flex flex-col items-center gap-4">
+              <AlertTriangle className="h-16 w-16 text-muted-foreground" />
+              <h2 className="text-2xl font-bold">Dataset Coming Soon</h2>
+              <p className="text-muted-foreground max-w-md">
+                V2 results using the CIC-IDS2018 dataset are not yet available. 
+                Please check back later or select another dataset version.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
-          <DashboardHeader version={activeVersion} />
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-6">
+          <DashboardHeader dataset={activeDataset} model={activeModel} />
           <VersionTabs 
-            versions={modelVersions} 
+            versions={datasetVersions} 
             activeVersion={activeVersionId} 
-            onVersionChange={setActiveVersionId} 
+            onVersionChange={handleVersionChange} 
+          />
+        </div>
+
+        {/* Model Selector */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">Select Model</h3>
+          <ModelSelector 
+            models={activeDataset.models}
+            activeModelId={activeModelId}
+            onModelChange={setActiveModelId}
           />
         </div>
 
@@ -31,68 +83,49 @@ const Index = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             title="Accuracy"
-            value={`${(activeVersion.accuracy * 100).toFixed(1)}%`}
+            value={`${(activeModel.accuracy * 100).toFixed(2)}%`}
             subtitle="On test set"
             icon={Target}
-            trend="up"
-            trendValue={`+${((activeVersion.accuracy - 0.8) * 100).toFixed(1)}% from baseline`}
+            trend={activeModel.accuracy > 0.75 ? "up" : undefined}
+            trendValue={activeModel.accuracy > 0.75 ? "Good performance" : undefined}
           />
           <StatCard
-            title="Loss"
-            value={activeVersion.loss.toFixed(3)}
-            subtitle="Final validation"
-            icon={TrendingDown}
-          />
-          <StatCard
-            title="F1 Score"
-            value={activeVersion.f1Score.toFixed(3)}
-            subtitle="Harmonic mean"
-            icon={Award}
-          />
-          <StatCard
-            title="AUC-ROC"
-            value={activeVersion.aucScore.toFixed(3)}
-            subtitle="Area under curve"
+            title="Precision"
+            value={`${(activeModel.precision * 100).toFixed(2)}%`}
+            subtitle="True positive rate"
             icon={Crosshair}
           />
-        </div>
-
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <ClassDistributionChart data={activeVersion.classDistribution} />
-          <SplitChart split={activeVersion.splitPercentages} />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <LossAccuracyChart 
-            lossData={activeVersion.lossHistory} 
-            accuracyData={activeVersion.accuracyHistory}
-            type="loss"
+          <StatCard
+            title="Recall"
+            value={`${(activeModel.recall * 100).toFixed(2)}%`}
+            subtitle="Sensitivity"
+            icon={Shield}
           />
-          <LossAccuracyChart 
-            lossData={activeVersion.lossHistory} 
-            accuracyData={activeVersion.accuracyHistory}
-            type="accuracy"
+          <StatCard
+            title="FPR"
+            value={`${(activeModel.fpr * 100).toFixed(2)}%`}
+            subtitle="False Positive Rate"
+            icon={AlertTriangle}
+            trend={activeModel.fpr < 0.1 ? "up" : "down"}
+            trendValue={activeModel.fpr < 0.1 ? "Low false alarms" : "High false alarms"}
           />
         </div>
 
+        {/* Charts Grid - Row 1 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <ClassDistributionChart data={activeDataset.classDistribution} />
+          <SplitChart split={activeDataset.splitPercentages} />
+        </div>
+
+        {/* Charts Grid - Row 2 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RocPrChart 
-            rocData={activeVersion.rocData} 
-            prData={activeVersion.prData}
-            type="roc"
-            aucScore={activeVersion.aucScore}
-          />
-          <RocPrChart 
-            rocData={activeVersion.rocData} 
-            prData={activeVersion.prData}
-            type="pr"
-          />
+          <MetricsTable model={activeModel} />
+          <ConfusionMatrix model={activeModel} />
         </div>
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>Model metrics dashboard • Last updated: {new Date().toLocaleDateString()}</p>
+          <p>ML-Based Threat-Aware Autoscaling • {activeDataset.datasetName} • {activeDataset.date}</p>
         </div>
       </div>
     </div>

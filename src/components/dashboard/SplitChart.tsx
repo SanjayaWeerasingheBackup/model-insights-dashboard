@@ -1,8 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
-import { ModelVersion } from "@/data/modelData";
 
 interface SplitChartProps {
-  split: ModelVersion["splitPercentages"];
+  split: { train: number; validation: number; test: number };
 }
 
 const COLORS = [
@@ -16,7 +15,7 @@ export const SplitChart = ({ split }: SplitChartProps) => {
     { name: "Train", value: split.train },
     { name: "Validation", value: split.validation },
     { name: "Test", value: split.test },
-  ];
+  ].filter(item => item.value > 0);
 
   return (
     <div className="chart-container fade-in">
