@@ -1,7 +1,13 @@
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 
+interface SplitInfo {
+  train: { samples: number; composition: string };
+  test: { samples: number; composition: string };
+}
+
 interface SplitChartProps {
   split: { train: number; validation: number; test: number };
+  splitInfo?: SplitInfo;
 }
 
 const COLORS = [
@@ -10,7 +16,7 @@ const COLORS = [
   "hsl(45, 93%, 58%)",
 ];
 
-export const SplitChart = ({ split }: SplitChartProps) => {
+export const SplitChart = ({ split, splitInfo }: SplitChartProps) => {
   const data = [
     { name: "Train", value: split.train },
     { name: "Validation", value: split.validation },
@@ -56,18 +62,36 @@ export const SplitChart = ({ split }: SplitChartProps) => {
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <div className="mt-4 flex justify-center gap-6">
-        {data.map((item, index) => (
-          <div key={item.name} className="text-center">
-            <div 
-              className="w-3 h-3 rounded-full mx-auto mb-1" 
-              style={{ backgroundColor: COLORS[index] }}
-            />
-            <p className="text-xs text-muted-foreground">{item.name}</p>
-            <p className="font-mono font-bold text-lg">{item.value}%</p>
+      
+      {splitInfo ? (
+        <div className="mt-4 space-y-2">
+          <div className="flex justify-between items-center p-2 rounded bg-card/50">
+            <span className="text-sm font-medium" style={{ color: COLORS[0] }}>Train</span>
+            <span className="text-xs text-muted-foreground">
+              {splitInfo.train.samples.toLocaleString()} samples ({splitInfo.train.composition})
+            </span>
           </div>
-        ))}
-      </div>
+          <div className="flex justify-between items-center p-2 rounded bg-card/50">
+            <span className="text-sm font-medium" style={{ color: COLORS[2] }}>Test</span>
+            <span className="text-xs text-muted-foreground">
+              {splitInfo.test.samples.toLocaleString()} samples ({splitInfo.test.composition})
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-4 flex justify-center gap-6">
+          {data.map((item, index) => (
+            <div key={item.name} className="text-center">
+              <div 
+                className="w-3 h-3 rounded-full mx-auto mb-1" 
+                style={{ backgroundColor: COLORS[index] }}
+              />
+              <p className="text-xs text-muted-foreground">{item.name}</p>
+              <p className="font-mono font-bold text-lg">{item.value}%</p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
