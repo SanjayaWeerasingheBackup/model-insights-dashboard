@@ -1,7 +1,9 @@
-import { ModelVersion } from "@/data/modelData";
+import { DatasetVersion } from "@/data/modelData";
+import { cn } from "@/lib/utils";
+import { Lock } from "lucide-react";
 
 interface VersionTabsProps {
-  versions: ModelVersion[];
+  versions: DatasetVersion[];
   activeVersion: string;
   onVersionChange: (versionId: string) => void;
 }
@@ -12,14 +14,26 @@ export const VersionTabs = ({ versions, activeVersion, onVersionChange }: Versio
       {versions.map((version) => (
         <button
           key={version.id}
-          onClick={() => onVersionChange(version.id)}
-          className={`version-tab ${
-            activeVersion === version.id ? "version-tab-active" : "version-tab-inactive"
-          }`}
+          onClick={() => version.available && onVersionChange(version.id)}
+          disabled={!version.available}
+          className={cn(
+            "version-tab relative",
+            activeVersion === version.id 
+              ? "version-tab-active" 
+              : version.available 
+                ? "version-tab-inactive" 
+                : "version-tab-inactive opacity-50 cursor-not-allowed"
+          )}
         >
-          <span className="font-mono text-sm">{version.id.toUpperCase()}</span>
+          <div className="flex items-center gap-1.5">
+            {!version.available && <Lock className="h-3 w-3" />}
+            <span className="font-mono text-sm">{version.id.toUpperCase()}</span>
+          </div>
           <span className="ml-2 text-xs opacity-80">
-            {(version.accuracy * 100).toFixed(1)}%
+            {version.available 
+              ? `${version.models.length} models`
+              : "Coming Soon"
+            }
           </span>
         </button>
       ))}
