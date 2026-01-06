@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Target, Shield, Crosshair, AlertTriangle } from "lucide-react";
+import { Target, Shield, Crosshair, AlertTriangle, Terminal } from "lucide-react";
 import { datasetVersions } from "@/data/modelData";
+import { curveData } from "@/data/curveData";
+import { trainingHistory } from "@/data/trainingHistory";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { VersionTabs } from "@/components/dashboard/VersionTabs";
 import { ModelSelector } from "@/components/dashboard/ModelSelector";
@@ -9,12 +11,17 @@ import { ClassDistributionChart } from "@/components/dashboard/ClassDistribution
 import { SplitChart } from "@/components/dashboard/SplitChart";
 import { ConfusionMatrix } from "@/components/dashboard/ConfusionMatrix";
 import { MetricsTable } from "@/components/dashboard/MetricsTable";
+import { ROCPRCurves } from "@/components/dashboard/ROCPRCurves";
+import { LossCurve } from "@/components/dashboard/LossCurve";
+import { TerminalPopup } from "@/components/dashboard/TerminalPopup";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [activeVersionId, setActiveVersionId] = useState("v3");
   const [activeModelId, setActiveModelId] = useState("ocsvm");
-  
+  const [showTerminal, setShowTerminal] = useState(false);
+
   const activeDataset = datasetVersions.find(v => v.id === activeVersionId) || datasetVersions[2];
   const activeModel = activeDataset.models.find(m => m.id === activeModelId) || activeDataset.models[0];
 
@@ -71,8 +78,19 @@ const Index = () => {
 
         {/* Model Selector */}
         <div className="mb-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-3">Select Model</h3>
-          <ModelSelector 
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-muted-foreground">Select Model</h3>
+            <Button
+              onClick={() => setShowTerminal(true)}
+              className="flex items-center gap-2"
+              variant="default"
+              size="sm"
+            >
+              <Terminal className="h-4 w-4" />
+              Run Test
+            </Button>
+          </div>
+          <ModelSelector
             models={activeDataset.models}
             activeModelId={activeModelId}
             onModelChange={setActiveModelId}
@@ -118,15 +136,40 @@ const Index = () => {
         </div>
 
         {/* Charts Grid - Row 2 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <MetricsTable model={activeModel} />
           <ConfusionMatrix model={activeModel} />
         </div>
+
+        {/* ROC/PR Curves - Full Width */}
+        <ROCPRCurves
+          curveData={curveData?.[activeVersionId]?.[activeModelId]}
+          modelName={activeModel.name}
+        />
+
+        {/* Loss Curve (only for Autoencoder) */}
+        {activeModelId === 'autoencoder' && (
+          <div className="mt-6">
+            <LossCurve
+              trainingHistory={trainingHistory?.[activeVersionId]?.[activeModelId]}
+              modelName={activeModel.name}
+            />
+          </div>
+        )}
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-muted-foreground">
           <p>ML-Based Threat-Aware Autoscaling • {activeDataset.datasetName} • {activeDataset.date}</p>
         </div>
+
+        {/* Terminal Popup */}
+        <TerminalPopup
+          open={showTerminal}
+          onClose={() => setShowTerminal(false)}
+          version={activeVersionId}
+          model={activeModelId}
+          modelName={activeModel.name}
+        />
       </div>
     </div>
   );
